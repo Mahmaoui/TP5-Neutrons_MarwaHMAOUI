@@ -1,0 +1,12 @@
+# Executables et Objets
+*.o
+*.a
+bin/
+
+# Fichiers de la simulation
+MTStatus-*
+Results/
+
+# Logs et temporaires
+*.log
+*~
