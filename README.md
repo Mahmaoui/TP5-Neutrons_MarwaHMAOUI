@@ -49,7 +49,7 @@ Le temps d'exécution réel (Wall Clock Time) a été mesuré à **4 secondes** 
 
 ### Prérequis
 * Compilateur C++ (g++)
-* Environnement Linux/Unix (recommandé : Ubuntu)
+* Environnement Linux/Unix (Sur mon PC, je travaille sur Ubuntu)
 * Librairie **CLHEP 2.1.0.0** (incluant le module `CLHEP-Random`)
 * Outil d'analyse `AWK`
 
