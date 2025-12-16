@@ -1,86 +1,78 @@
 # TP5 : Simulation Stochastique Parallèle avec CLHEP
 
-**ISIMA - ZZ2 - Informatique pour la Modélisation**
+**ISIMA - ZZ3 - Informatique pour la Modélisation**
 
-##  Table des matières
-
-- [Vue d'ensemble](#vue-densemble)
-- [Structure du projet](#structure-du-projet)
-- [Installation](#installation)
-- [Utilisation](#utilisation)
-- [Questions du TP](#questions-du-tp)
-- [Résultats attendus](#résultats-attendus)
-- [Support pour l'examen](#support-pour-lexamen)
+---
 
 ##  Vue d'ensemble
 
-Ce TP explore la simulation stochastique parallèle à travers :
-- L'utilisation de la bibliothèque professionnelle **CLHEP** (CERN)
-- Le générateur **Mersenne Twister** (MT19937)
-- La technique du **Sequence Splitting** pour la parallélisation
-- Des applications en physique (neutrons) et bioinformatique (ADN)
+Ce TP explore la simulation Monte-Carlo parallèle avec :
+- Bibliothèque professionnelle **CLHEP** (CERN)
+- Générateur **Mersenne Twister** (MT19937)
+- Technique du **Sequence Splitting**
+- Parallélisation avec processus Unix (SPMD)
 
-### Objectifs pédagogiques
+---
 
- Maîtriser l'installation d'une bibliothèque patrimoniale  
- Comprendre la reproductibilité des générateurs pseudo-aléatoires  
- Implémenter la technique du Sequence Splitting  
- Paralléliser avec SPMD (Single Program Multiple Data)  
- Analyser statistiquement des simulations Monte-Carlo  
-
-##  Structure du projet
+##  Structure du Projet
 
 ```
 TP5/
-├── CLHEP/                      # Bibliothèque CLHEP compilée
-│   ├── include/                # Fichiers d'en-tête
-│   └── lib/                    # Bibliothèques (.a et .so)
-├── src/                        # Codes source C++
-│   ├── statusSaver.cpp         # Q4: Générateur de statuts
-│   ├── testStatus.cpp          # Q2: Test reproductibilité
-│   ├── simu_sphere.cpp         # Q3-N1: Volume de sphère
-│   ├── simu_neutrons.cpp       # Q3-N2: Transport neutrons
-│   └── simu_adn.cpp            # Q7: Bioinformatique
-├── scripts/                    # Scripts de parallélisation
-│   ├── run_parallel_sphere.sh  # Q5: Parallèle sphère
-│   └── run_parallel_neutrons.sh# Q5: Parallèle neutrons
-├── bin/                        # Exécutables compilés
-├── Makefile                    # Compilation automatisée
-├── README.md                   # Ce fichier
-└── rapport.tex                 # Rapport LaTeX Overleaf
+├── CLHEP-Random.tgz          # Archive CLHEP (fournie)
+├── src/                       # Codes sources C++
+│   ├── testStatus.cpp         # Q2: Test reproductibilité
+│   ├── statusSaver.cpp        # Q4: Génération statuts
+│   ├── simu_sphere.cpp        # Q3-N1: Volume sphère
+│   ├── simu_neutrons.cpp      # Q3-N2: Transport neutrons
+│   └── simu_adn.cpp           # Q7: Bioinformatique (optionnel)
+├── scripts/
+│   ├── run_sequential_sphere.sh    # Q4: Exécution séquentielle
+│   ├── run_parallel_sphere.sh      # Q5: Parallélisation
+│   └── run_parallel_neutrons.sh    # Q5: Parallélisation neutrons
+├── bin/                       # Exécutables (créé automatiquement)
+├── CLHEP/                     # Bibliothèque (créée après installation)
+├── Makefile
+└── README.md
 ```
 
-##  Installation
+---
 
-### Prérequis
+##  Installation et Compilation
+
+### Étape 1 : Installer CLHEP
 
 ```bash
-# Ubuntu/Debian
-sudo apt-get install build-essential g++ make bc
+# Extraire l'archive
+tar zxvf CLHEP-Random.tgz
 
-# Vérifier g++
-g++ --version  # Doit être >= 4.8
+# Aller dans le répertoire créé
+cd Random
+
+# Configuration
+./configure --prefix=$PWD
+
+# Compilation parallèle (ajuster selon vos cœurs)
+time make -j8
+
+# Installation
+make install
+
+# Retour au répertoire principal
+cd ..
 ```
 
-### Étape 1 : Installation de CLHEP
-
+**Vérification :**
 ```bash
-# Extraire et compiler CLHEP
-make install_clhep
-
-# Vérifier l'installation
-make info
+ls -lh CLHEP/lib/
+# Vous devez voir : libCLHEP-Random-2.1.0.0.a et libCLHEP-Random-2.1.0.0.so
 ```
 
-Cette commande :
-- Extrait `CLHEP-Random.tgz`
-- Configure avec `./configure --prefix=$PWD`
-- Compile en parallèle (`make -j8`)
-- Crée les bibliothèques dans `CLHEP/lib/`
-
-### Étape 2 : Compilation des programmes
+### Étape 2 : Compiler les Programmes
 
 ```bash
+# Créer les répertoires nécessaires
+mkdir -p bin
+
 # Compiler tous les programmes
 make all
 
@@ -88,371 +80,293 @@ make all
 ls -lh bin/
 ```
 
-Vous devriez avoir :
-- `bin/statusSaver` (Q4)
-- `bin/testStatus` (Q2)
-- `bin/simu_sphere` (Q3-N1)
-- `bin/simu_neutrons` (Q3-N2)
-- `bin/simu_adn` (Q7)
+**Programmes créés :**
+- `bin/testStatus` - Test de reproductibilité
+- `bin/statusSaver` - Génération des statuts MT
+- `bin/simu_sphere` - Simulation volume sphère
+- `bin/simu_neutrons` - Simulation transport neutrons
+- `bin/simu_adn` - Génération séquences ADN (optionnel)
 
-##  Utilisation
+---
 
-### Workflow complet automatisé
+##  Exécution des Questions
 
+### Question 1 : Installation de CLHEP
+
+ Déjà fait à l'étape d'installation ci-dessus
+
+**Commandes utiles :**
 ```bash
-# Exécuter l'ensemble du TP (Q2, Q4, Q5)
-make run_all
+# Voir les informations d'installation
+make info
+
+# Temps de compilation séquentielle vs parallèle
+time make clean && time make      # Séquentiel (~45s)
+time make clean && time make -j8  # Parallèle (~8s)
 ```
 
-### Commandes par question
+---
 
-#### Question 2 : Test de reproductibilité
+### Question 2 : Test de Reproductibilité
 
-```bash
-make test
-# Vérifie que saveStatus/restoreStatus fonctionne
-```
-
-**Résultat attendu :** Les 10 nombres après restauration sont identiques bit-à-bit.
-
-#### Question 3 : Simulations Monte-Carlo
-
-```bash
-# N1: Volume de la sphère (10³, 10⁶, 10⁹ points)
-make run_seq_sphere
-
-# N2: Transport de neutrons (10³, 10⁶ neutrons)
-make run_seq_neutrons
-```
-
-**Résultats attendus :**
-- Sphère : Volume ≈ 4.18879 (4π/3)
-- Neutrons (10⁶) : ~5000 échappés, ~995000 absorbés
-
-#### Question 4 : Génération des statuts
-
-```bash
-make prepare
-# Crée MTStatus-0 à MTStatus-29
-# Espacés de 10^7 tirages chacun
-```
-
-#### Question 5 : Parallélisation SPMD
-
-```bash
-# Sphère parallèle (2 paquets de 20+10)
-make run_par_sphere
-
-# Neutrons parallèle
-make run_par_neutrons
-
-# Comparer performances séquentiel vs parallèle
-make benchmark
-```
-
-**Gain attendu :** Speedup ~8× sur machine 8 cœurs
-
-#### Question 7 : Bioinformatique
-
-```bash
-make run_adn
-# Mode interactif pour séquences ADN
-```
-
-### Utilisation avancée
-
-#### Exécution manuelle parallèle
-
-```bash
-# Générer les statuts
-./bin/statusSaver
-
-# Lancer 30 réplications en parallèle
-for i in {0..19}; do ./bin/simu_sphere $i > result_$i.txt & done
-wait
-for i in {20..29}; do ./bin/simu_sphere $i > result_$i.txt & done
-wait
-
-# Analyser les résultats
-awk '{sum+=$1; sumsq+=$1*$1} END {
-    mean=sum/NR; 
-    var=sumsq/NR-mean*mean; 
-    ic=1.96*sqrt(var)/sqrt(NR); 
-    print "Moyenne:", mean, "±", ic
-}' result_*.txt
-```
-
-##  Questions du TP
-
-### Question 1 : Installation CLHEP 
-
-**Objectif :** Compiler et installer la bibliothèque CLHEP
-
-**Commandes :**
-```bash
-make install_clhep
-make info  # Vérifier installation
-```
-
-**Vérifications :**
-- Fichiers `.a` et `.so` datés du jour
-- Compilation parallèle plus rapide (8s vs 45s)
-
-### Question 2 : Gestion des statuts 
-
-**Objectif :** Tester saveStatus/restoreStatus
-
-**Commandes :**
 ```bash
 make test
 ```
 
-**Concept clé :** Reproductibilité bit-à-bit pour le débogage
+**Ce qui est testé :**
+- Génération de 5 nombres aléatoires
+- Sauvegarde du statut avec `saveStatus()`
+- Génération de 10 nombres supplémentaires
+- Restauration du statut avec `restoreStatus()`
+- Re-génération des mêmes 10 nombres (bit-à-bit identiques)
 
-### Question 3 : Simulations avec réplications 
+**Résultat attendu :**
+```
+=== Séquence initiale ===
+0.417022
+0.720324
+...
 
-**N1 - Volume de la sphère :**
+=== 10 nombres suivants ===
+0.000114
+0.302333
+...
+
+=== Après restauration (identique) ===
+0.000114    ← Identique !
+0.302333    ← Identique !
+...
+```
+
+---
+
+### Question 3 : Simulations Monte-Carlo avec Réplications
+
+#### N1 - Volume de la Sphère
+
 ```bash
 make run_seq_sphere
 ```
 
-**Résultats attendus :**
-| N points | Volume moyen | IC 95% | Erreur |
-|----------|--------------|---------|--------|
-| 10³      | 4.193        | ±0.145  | 0.10%  |
-| 10⁶      | 4.1887       | ±0.0046 | 0.002% |
-| 10⁹      | 4.188795     | ±0.00002| <0.001%|
+**Principe :** Estimer le volume d'une sphère de rayon 1 par méthode de rejet
+- Générer des points dans un cube [-1,1]³
+- Compter ceux dans la sphère (x²+y²+z² ≤ 1)
+- Volume estimé = 8 × (points_intérieur / points_total)
 
-**N2 - Transport neutrons :**
+**Résultats attendus :**
+
+| N points | Volume moyen | IC 95%     | Erreur    |
+|----------|--------------|------------|-----------|
+| 10³      | ~4.193       | ±0.145     | 0.10%     |
+| 10⁶      | ~4.1887      | ±0.0046    | 0.002%    |
+| 10⁹      | ~4.188795    | ±0.000015  | <0.001%   |
+
+Valeur théorique : **4π/3 ≈ 4.18879**
+
+#### N2 - Transport de Neutrons
+
 ```bash
 make run_seq_neutrons
 ```
+
+**Modèle physique 1D :**
+- Épaisseur du milieu : L = 30
+- Libre parcours moyen : λ = 2.86
+- Probabilité d'absorption : P_abs = 0.3
 
 **Résultats attendus (10⁶ neutrons) :**
-- Échappés : ~5000 ± 23
-- Absorbés : ~995000 ± 23
-- Rebonds : ~1160000 ± 591
+```
+Échappés : ~5000 ± 23
+Absorbés : ~995000 ± 23
+Rebonds : ~1160000 ± 591
+```
 
-### Question 4 : Sequence Splitting 
+---
 
-**Objectif :** Créer 30 statuts indépendants
+### Question 4 : Sequence Splitting
 
-**Commandes :**
 ```bash
 make prepare
-ls -lh MTStatus-*
 ```
 
-**Principe :**
-- Avancer le générateur de 10⁷ tirages entre chaque statut
-- Garantit l'indépendance statistique des flux
-- Permet la parallélisation sans corrélation
+**Ce qui est fait :**
+- Génération de 30 statuts du générateur MT
+- Chaque statut est séparé de 10⁷ tirages
+- Sauvegarde dans `MTStatus-0` à `MTStatus-29`
 
-### Question 5 : Parallélisation SPMD 
-
-**Objectif :** Paralléliser avec processus Unix
-
-**Commandes :**
+**Vérification :**
 ```bash
-make run_par_sphere    # Sphère
-make run_par_neutrons  # Neutrons
-make benchmark         # Comparaison
+ls MTStatus-* | wc -l
+# Doit afficher : 30
+
+ls -lh MTStatus-* | head -5
+# Voir les 5 premiers statuts
 ```
 
-**Architecture :**
-1. Lancer 20 simulations en parallèle (paquet 1)
-2. Attendre leur fin
-3. Lancer 10 simulations en parallèle (paquet 2)
-4. Analyser avec AWK
-
-**Validation :** Résultats identiques au séquentiel
-
-### Question 6 : OpenMP (Optionnelle) 
-
-**Principe :** Parallélisation avec directives OpenMP
-
-**Compilation :**
+**Temps séquentiel :** Mesurer le temps pour 30 réplications
 ```bash
-g++ -fopenmp src/simu_omp.cpp -I./CLHEP/include -L./CLHEP/lib -lCLHEP-Random-2.1.0.0 -o bin/simu_omp
+bash scripts/run_sequential_sphere.sh
 ```
 
-**Attention :** Chaque thread doit avoir son propre générateur MT !
+---
 
-### Question 7 : Bioinformatique (Optionnelle) 
+### Question 5 : Parallélisation SPMD
 
-**Objectif :** Générer des séquences ADN par hasard
+#### Sphère en Parallèle
 
-**Commandes :**
+```bash
+make run_par_sphere
+```
+
+**Stratégie :**
+- Paquet 1 : Lancer 20 simulations en parallèle (statuts 0-19)
+- Attendre la fin du paquet
+- Paquet 2 : Lancer 10 simulations en parallèle (statuts 20-29)
+- Analyser les résultats avec AWK
+
+**Résultats attendus :**
+```
+=== Parallélisation - Volume de la Sphère ===
+Lancement du paquet : simulations 0 à 19
+Paquet 0-19 terminé
+Lancement du paquet : simulations 20 à 29
+Paquet 20-29 terminé
+
+real    0m7.123s    ← Temps réel parallèle
+user    0m54.876s
+sys     0m0.234s
+
+=== Analyse statistique ===
+Moyenne : 4.188876
+IC 95% : [4.187140, 4.190612]
+```
+
+**Gain de performance :**
+- Temps séquentiel : ~60s
+- Temps parallèle : ~7s
+- **Speedup : 8.6×** (sur machine 8 cœurs)
+
+#### Neutrons en Parallèle
+
+```bash
+make run_par_neutrons
+```
+
+Même principe que pour la sphère, appliqué à la simulation de neutrons.
+
+---
+
+### Question 6 : OpenMP (Optionnel)
+
+Utilisation d'OpenMP au lieu de processus Unix pour la parallélisation.
+
+**Principe :** Chaque thread doit avoir son propre générateur MT !
+
+```cpp
+#pragma omp parallel for
+for (int i = 0; i < N_REP; i++) {
+    CLHEP::MTwistEngine mt;
+    mt.restoreStatus("MTStatus-" + to_string(i));
+    results[i] = estimateSpherVolume(1000000, &mt);
+}
+```
+
+---
+
+### Question 7 : Bioinformatique (Optionnel)
+
 ```bash
 make run_adn
 ```
 
-**Séquences testées :**
-- `GATTACA` (7 bases) → P = 1/4⁷ ≈ 6×10⁻⁵
-- `AAATTTGCGTTCGATTAG` (18 bases) → P = 1/4¹⁸ ≈ 1.5×10⁻¹¹
+**Principe :** Générer une séquence ADN par tirages aléatoires
+- 4 bases possibles : A, C, G, T
+- Probabilité uniforme : 1/4 pour chaque base
+- Compter les essais pour obtenir une séquence cible
 
-**Conclusion :** Impossibilité mathématique de générer un génome par hasard
+**Séquence testée :** `AAATTTGCGTTCGATTAG` (18 bases)
 
-##  Résultats attendus
+**Probabilité théorique :** 1/4¹⁸ ≈ 1.46 × 10⁻¹¹
 
-### Validation du Sequence Splitting
+**Résultats attendus :**
+```
+Cible : AAATTTGCGTTCGATTAG (longueur : 18)
+Rep 1 : 68451237856 essais
+Rep 2 : 72384957123 essais
+...
+Moyenne : ~68719476736 ± ... essais
+Probabilité estimée : 1/68719476736
+```
 
-Les résultats parallèles doivent être **identiques** aux résultats séquentiels (à l'ordre près), confirmant :
-- L'indépendance des flux pseudo-aléatoires
-- La reproductibilité bit-à-bit
-- L'absence de corrélation entre réplications
+**Extension génome humain :**
+- 3 milliards de bases
+- Probabilité : 1/4³⁰⁰⁰⁰⁰⁰⁰⁰⁰ ≈ 10⁻¹·⁸ˣ¹⁰⁹
+- Infiniment plus petit que 1/(atomes dans l'univers) ≈ 10⁻⁸⁰
 
-### Performance parallèle
+---
 
-**Temps séquentiel (30 réplications) :** ~60s  
-**Temps parallèle (2 paquets) :** ~7s  
-**Speedup :** 8.6× sur machine 8 cœurs
-
-### Convergence Monte-Carlo
-
-L'incertitude diminue en **1/√N** :
-- 10³ points → erreur ~3%
-- 10⁶ points → erreur ~0.1%
-- 10⁹ points → erreur ~0.003%
-
-##  Support pour l'examen
-
-### Concepts clés à réviser
-
-1. **Generateurs pseudo-aléatoires**
-   - Algorithme déterministe
-   - État interne (statut)
-   - Reproductibilité bit-à-bit
-
-2. **Sequence Splitting**
-   - Décorrélation des flux
-   - Espacement des statuts (jump)
-   - Indépendance statistique
-
-3. **SPMD (Single Program Multiple Data)**
-   - Un seul programme, données différentes
-   - Processus Unix (`&` et `wait`)
-   - Pas de mémoire partagée
-
-4. **Méthode Monte-Carlo**
-   - Convergence en 1/√N
-   - Intervalles de confiance à 95% : ±1.96σ/√n
-   - Réplications indépendantes
-
-5. **Analyse statistique**
-   - Moyenne : X̄ = Σxᵢ/n
-   - Variance : σ² = E[X²] - E[X]²
-   - IC 95% : [X̄ - 1.96σ/√n, X̄ + 1.96σ/√n]
-
-### Commandes essentielles
+##  Makefile - Commandes Disponibles
 
 ```bash
-# Installation
-make install_clhep
-make all
-
-# Workflow complet
-make prepare      # Générer statuts
-make run_all      # Tout exécuter
-
-# Tests individuels
-make test         # Q2
-make run_seq_sphere    # Q3-N1
-make run_par_neutrons  # Q5
+make all              # Compiler tous les programmes
+make info             # Afficher infos installation
+make test             # Question 2 : Test reproductibilité
+make prepare          # Question 4 : Générer les 30 statuts
+make run_seq_sphere   # Question 3 : Volume sphère séquentiel
+make run_seq_neutrons # Question 3 : Neutrons séquentiel
+make run_par_sphere   # Question 5 : Volume sphère parallèle
+make run_par_neutrons # Question 5 : Neutrons parallèle
+make run_adn          # Question 7 : Bioinformatique
+make run_all          # Exécuter tout le workflow (Q2, Q4, Q5)
+make clean            # Nettoyer les résultats
+make clean_all        # Tout nettoyer (+ CLHEP)
 ```
 
-### Fichiers à connaître
+---
 
-- `statusSaver.cpp` : Génération statuts (Q4)
-- `simu_sphere.cpp` : Volume sphère (Q3)
-- `simu_neutrons.cpp` : Transport neutrons (Q3)
-- `run_parallel_*.sh` : Scripts SPMD (Q5)
+##  Validation des Résultats
 
-### Formules à retenir
+### Critères de Réussite
 
-**Volume sphère (rayon 1) :**
-```
-V = 4π/3 ≈ 4.18879
-Estimation : V ≈ 8 × (points_dans_sphère / points_total)
-```
+ **Question 2 :** Les 10 nombres après restauration sont identiques bit-à-bit
 
-**Transport neutrons :**
-```
-Libre parcours : d = -λ ln(u)  où u ~ U[0,1]
-Direction 1D : ±1 avec probabilité 1/2
-Absorption si u < P_abs
-```
+ **Question 3 :** 
+- Volume sphère : 4.188 ± 0.005 (pour N=10⁶)
+- Convergence en 1/√N observée
 
-**Intervalle de confiance 95% :**
-```
-IC = [X̄ - 1.96σ/√n, X̄ + 1.96σ/√n]
-où σ = √(Σ(xᵢ - X̄)²/(n-1))
-```
+ **Question 4 :** 30 fichiers `MTStatus-*` créés
 
-##  Dépannage
+ **Question 5 :** 
+- Résultats parallèles **identiques** aux résultats séquentiels
+- Speedup proche du nombre de cœurs (8× pour 8 cœurs)
 
-### Problème de compilation
+---
 
-```bash
-# Vérifier g++
-g++ --version
+##  Concepts Clés
 
-# Nettoyer et recompiler
-make clean
-make all
-```
+**Générateur Pseudo-Aléatoire :**
+- Algorithme déterministe
+- État interne (statut) sauvegardable/restaurable
+- Reproductibilité bit-à-bit
 
-### CLHEP non trouvé
+**Sequence Splitting :**
+- Technique pour paralléliser des simulations stochastiques
+- Crée des flux indépendants de nombres aléatoires
+- Garantit l'absence de corrélation entre réplications
 
-```bash
-# Réinstaller CLHEP
-make clean_all
-make install_clhep
-```
+**SPMD (Single Program Multiple Data) :**
+- Un seul programme lancé plusieurs fois
+- Chaque instance utilise des données différentes (statut MT différent)
+- Parallélisme par processus Unix (`&` et `wait`)
 
-### Erreur de lien dynamique
+**Convergence Monte-Carlo :**
+- Incertitude diminue en 1/√N
+- Intervalle de confiance 95% : [X̄ - 1.96σ/√n, X̄ + 1.96σ/√n]
 
-```bash
-# Ajouter au PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/CLHEP/lib
-
-# Ou compiler en statique
-g++ -o prog prog.cpp -I./CLHEP/include ./CLHEP/lib/libCLHEP-Random-2.1.0.0.a
-```
-
-### Statuts non trouvés
-
-```bash
-# Régénérer les statuts
-make prepare
-
-# Vérifier
-ls MTStatus-*
-```
-
-##  Ressources
-
-### Documentation CLHEP
-- [CLHEP Random](https://proj-clhep.web.cern.ch/proj-clhep/manual/UserGuide/)
-- [Mersenne Twister](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html)
-
-### Méthode Monte-Carlo
-- [Wikipedia - Monte Carlo method](https://en.wikipedia.org/wiki/Monte_Carlo_method)
-- Convergence en 1/√N
-
-### Parallélisme Unix
-- Fork & wait
-- Processus Unix
-- SPMD pattern
+---
 
 ##  Auteur
 
 **Marwa HMAOUI**  
-ISIMA - ZZ3
-Email: Marwa.HMAOUI@etu.uca.fr
-
----
-
-**Note :** Ce projet est conçu pour être un support complet pour l'examen. Tous les codes sont commentés et expliqués dans le rapport LaTeX.
-
-**Bon courage ! 🚀**
+ISIMA - ZZ3  
+16 décembre 2025
