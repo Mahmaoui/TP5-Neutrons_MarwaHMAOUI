@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
         // Restauration du statut spécifique
         std::ostringstream filename;
         filename << "MTStatus-" << statusNum;
-        mt->restoreStatus(filename.str());
+        mt->restoreStatus(filename.str().c_str());
         
         // Simulation avec 10^6 points
         double volume = estimateSpherVolume(1000000, mt);
