@@ -293,7 +293,7 @@ make run_adn
 
 **Conclusion :** Impossibilité mathématique de générer un génome par hasard
 
-## 📊 Résultats attendus
+##  Résultats attendus
 
 ### Validation du Sequence Splitting
 
@@ -315,7 +315,7 @@ L'incertitude diminue en **1/√N** :
 - 10⁶ points → erreur ~0.1%
 - 10⁹ points → erreur ~0.003%
 
-## 🎓 Support pour l'examen
+##  Support pour l'examen
 
 ### Concepts clés à réviser
 
@@ -389,7 +389,7 @@ IC = [X̄ - 1.96σ/√n, X̄ + 1.96σ/√n]
 où σ = √(Σ(xᵢ - X̄)²/(n-1))
 ```
 
-## 🔧 Dépannage
+##  Dépannage
 
 ### Problème de compilation
 
