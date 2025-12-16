@@ -16,7 +16,7 @@ int main() {
         filename << "MTStatus-" << i;
         
         // Sauvegarde du statut
-        mt->saveStatus(filename.str());
+        mt->saveStatus(filename.str().c_str());
         std::cout << "Statut " << i << " sauvegardé : " << filename.str() << std::endl;
         
         // Avancer le générateur de JUMP_SIZE tirages
